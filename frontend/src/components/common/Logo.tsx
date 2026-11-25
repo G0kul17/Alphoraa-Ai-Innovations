@@ -19,7 +19,7 @@ export function Logo({ className = '', compact = false }: LogoProps) {
       aria-label="ALPHORAA AI INNOVATIONS Home"
     >
       <img
-        src="/brand/logo-mark.png"
+        src={`${import.meta.env.BASE_URL}brand/logo-mark.png`}
         alt=""
         width={36}
         height={36}
