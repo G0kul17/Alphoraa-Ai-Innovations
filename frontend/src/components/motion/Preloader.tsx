@@ -1,72 +1,50 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { EASE, INTRO_SESSION_KEY } from '../../animations/tokens';
 
 const SHUTTER_COLUMNS = 5;
 
-/** True when the intro already played in this browser session. */
-function introAlreadySeen(): boolean {
-  try {
-    return sessionStorage.getItem(INTRO_SESSION_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function markIntroSeen() {
-  try {
-    sessionStorage.setItem(INTRO_SESSION_KEY, '1');
-  } catch {
-    /* storage unavailable: intro may replay on reload, which is acceptable */
-  }
-}
-
 export function Preloader() {
   const reducedMotion = useReducedMotion();
-  const [visible, setVisible] = useState(() => !introAlreadySeen());
+  const [visible, setVisible] = useState(true);
   const [animStage, setAnimStage] = useState<'drawing' | 'ignite' | 'revealed'>('drawing');
-  const timers = useRef<number[]>([]);
 
   useEffect(() => {
-    if (reducedMotion || !visible) {
+    if (reducedMotion) {
       setVisible(false);
       return;
     }
 
-    markIntroSeen();
+    // Clean up any session flag so it always shows on refresh
+    try {
+      sessionStorage.removeItem('alphoraa-intro-seen');
+    } catch {
+      /* ignore */
+    }
 
-    const clearAll = () => {
-      timers.current.forEach(window.clearTimeout);
-      timers.current = [];
-    };
+    // Stage 1: Laser stroke draws the logo (0ms -> 600ms)
+    // Stage 2: Neon light bloom ignite (600ms -> 1100ms)
+    // Stage 3: Staggered shutter column cascade wipe (1100ms)
+    const t1 = setTimeout(() => {
+      setAnimStage('ignite');
+    }, 600);
 
-    // Total length <= 1.5s: draw (0-450ms), ignite (450-800ms), shutter wipe (800-1500ms).
-    timers.current.push(window.setTimeout(() => setAnimStage('ignite'), 450));
-    timers.current.push(window.setTimeout(() => setAnimStage('revealed'), 800));
-    timers.current.push(window.setTimeout(() => setVisible(false), 1500));
-
-    // Skip with any click or key press.
-    const skip = () => {
-      clearAll();
+    const t2 = setTimeout(() => {
       setAnimStage('revealed');
-      timers.current.push(window.setTimeout(() => setVisible(false), 650));
-      window.removeEventListener('pointerdown', skip);
-      window.removeEventListener('keydown', skip);
-    };
-    window.addEventListener('pointerdown', skip);
-    window.addEventListener('keydown', skip);
+    }, 1250);
+
+    const t3 = setTimeout(() => {
+      setVisible(false);
+    }, 1850);
 
     return () => {
-      clearAll();
-      window.removeEventListener('pointerdown', skip);
-      window.removeEventListener('keydown', skip);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reducedMotion]);
 
   if (reducedMotion) return null;
-
 
   return (
     <AnimatePresence>
@@ -87,9 +65,9 @@ export function Preloader() {
                     ? {
                         y: '-100%',
                         transition: {
-                          duration: 0.5,
-                          delay: i * 0.05, // Staggered cascade wave
-                          ease: EASE.inOut, // Luxury cubic ease
+                          duration: 0.75,
+                          delay: i * 0.07, // Staggered cascade wave
+                          ease: [0.85, 0, 0.15, 1], // Luxury cubic ease
                         },
                       }
                     : { y: 0 }
@@ -183,7 +161,7 @@ export function Preloader() {
               <motion.div
                 initial={{ y: 35, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.25, ease: EASE.settle }}
+                transition={{ duration: 0.5, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 className="font-brand text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-1"
               >
                 <span>ALPHORAA</span>

@@ -122,14 +122,14 @@ export function HeroSection() {
 
   const { scrollYProgress } = useScroll({
     target: heroContainerRef,
-    offset: ['start start', 'end end'],
+    offset: ['start start', 'end start'],
   });
 
-  // Scroll-driven transforms across 150vh pinned stage
+  // Scroll-driven transforms (responsive across all devices including mobile)
   const headingOpacity = useTransform(scrollYProgress, [0, 0.7, 1], [1, 0.85, 0.45]);
   const headingY = useTransform(scrollYProgress, [0, 1], [0, -36]);
-  const coreScale = useTransform(scrollYProgress, [0, 0.6, 1], [0.94, 1.06, 1.12]);
-  const orbitExpand = useTransform(scrollYProgress, [0, 0.85], [0.78, 1.04]);
+  const coreScale = useTransform(scrollYProgress, [0, 0.45, 0.95], [0.96, 1.15, 1.3]);
+  const orbitExpand = useTransform(scrollYProgress, [0, 0.65], [0.88, 1.12]);
 
   // Mouse parallax
   const mouseX = useMotionValue(0);
@@ -143,12 +143,27 @@ export function HeroSection() {
   const nodesShiftY = useTransform(smoothY, [-1, 1], [-8, 8]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    if (!enableScrollPin || !heroContainerRef.current) return;
+    if (!heroContainerRef.current) return;
     const rect = heroContainerRef.current.getBoundingClientRect();
     const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
     mouseX.set(nx);
     mouseY.set(ny);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLElement>) => {
+    if (!heroContainerRef.current || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const rect = heroContainerRef.current.getBoundingClientRect();
+    const nx = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = ((touch.clientY - rect.top) / rect.height) * 2 - 1;
+    mouseX.set(Math.max(-1, Math.min(1, nx)));
+    mouseY.set(Math.max(-1, Math.min(1, ny)));
+  };
+
+  const handleTouchEnd = () => {
+    mouseX.set(0);
+    mouseY.set(0);
   };
 
   const handleMouseLeave = () => {
@@ -193,6 +208,8 @@ export function HeroSection() {
       ref={heroContainerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       className={`relative gradient-dark-cinematic text-white ${
         enableScrollPin ? 'lg:min-h-[150vh]' : 'min-h-screen'
       }`}
@@ -260,7 +277,7 @@ export function HeroSection() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
             {/* Left Column: White Copy & Primary Actions */}
             <motion.div
-              style={enableScrollPin ? { opacity: headingOpacity, y: headingY } : undefined}
+              style={reducedMotion ? undefined : { opacity: headingOpacity, y: headingY }}
               className="lg:col-span-6 space-y-6"
             >
               <WordReveal
@@ -310,7 +327,10 @@ export function HeroSection() {
             {/* Right Column: Interactive 3D WebGL Neural Core + Agent Ecosystem */}
             <div className="lg:col-span-6 flex flex-col items-center">
               <motion.div
-                style={enableScrollPin ? { scale: coreScale } : undefined}
+                initial={reducedMotion ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.75, delay: 0.15, ease: EASE_SMOOTH }}
+                style={reducedMotion ? undefined : { scale: coreScale }}
                 className="relative mx-auto w-full max-w-[500px] aspect-[500/460] select-none"
               >
                 {/* 1. 3D WebGL Three.js Scene - Positioned in the exact center behind the nodes */}
@@ -328,11 +348,7 @@ export function HeroSection() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="absolute inset-0 w-full h-full z-10 pointer-events-none"
                   aria-label="Interactive AI ecosystem diagram connecting central AI core to five specialized agents"
-                  style={
-                    enableScrollPin
-                      ? { x: coreShiftX, y: coreShiftY }
-                      : undefined
-                  }
+                  style={{ x: coreShiftX, y: coreShiftY }}
                 >
                   <defs>
                     <radialGradient id="darkCoreGlow" cx="50%" cy="50%" r="50%">
@@ -379,82 +395,92 @@ export function HeroSection() {
                 {/* 3. The 5 Agent Nodes floating directly around the 3D Core */}
                 <motion.div
                   className="absolute inset-0 z-20 pointer-events-none"
-                  style={
-                    enableScrollPin
-                      ? { x: nodesShiftX, y: nodesShiftY, scale: orbitExpand }
-                      : undefined
-                  }
+                  style={{
+                    x: nodesShiftX,
+                    y: nodesShiftY,
+                    scale: reducedMotion ? 1 : orbitExpand,
+                  }}
                 >
                   {AGENT_NODES.map((node, idx) => {
                     const Icon = node.icon;
                     const isActive = hoveredNode === node.id;
 
                     return (
-                      <motion.div
+                      <div
                         key={node.id}
                         style={{
                           left: `${node.xPct}%`,
                           top: `${node.yPct}%`,
-                          transform: 'translate(-50%, -50%)',
                         }}
-                        initial={reducedMotion ? false : { opacity: 0, scale: 0.7 }}
-                        animate={
-                          reducedMotion
-                            ? { opacity: 1, scale: 1 }
-                            : {
-                                opacity: 1,
-                                scale: 1,
-                                y: [0, -7, 0],
-                              }
-                        }
-                        transition={
-                          reducedMotion
-                            ? { duration: 0.3 }
-                            : {
-                                opacity: { duration: 0.5, delay: 0.3 + idx * 0.08 },
-                                scale: { duration: 0.5, delay: 0.3 + idx * 0.08 },
-                                y: {
-                                  duration: node.duration,
-                                  repeat: Infinity,
-                                  ease: 'easeInOut',
-                                  delay: idx * 0.4,
-                                },
-                              }
-                        }
-                        className="absolute pointer-events-auto"
+                        className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
                       >
-                        <Link
-                          ref={(el) => {
-                            nodeRefs.current[idx] = el;
-                          }}
-                          to={node.href}
-                          data-cursor="Open"
-                          onKeyDown={(e) => handleNodeKeyDown(e, idx)}
-                          onMouseEnter={() => setHoveredNode(node.id)}
-                          onMouseLeave={() => setHoveredNode(null)}
-                          onFocus={() => setHoveredNode(node.id)}
-                          onBlur={() => setHoveredNode(null)}
-                          className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-2xl bg-[#0A0A0A]/90 backdrop-blur-md border transition-all duration-200 shadow-lg cursor-pointer ${
-                            isActive
-                              ? 'border-[#F36B21] scale-105 shadow-[0_12px_28px_-8px_rgba(243,107,33,0.45)]'
-                              : 'border-white/20 hover:border-[#5BB4F5]'
-                          }`}
+                        <motion.div
+                          initial={reducedMotion ? false : { opacity: 0, scale: 0.7 }}
+                          animate={
+                            reducedMotion
+                              ? { opacity: 1, scale: 1 }
+                              : {
+                                  opacity: 1,
+                                  scale: 1,
+                                  y: [0, -7, 0],
+                                }
+                          }
+                          transition={
+                            reducedMotion
+                              ? { duration: 0.3 }
+                              : {
+                                  opacity: { duration: 0.5, delay: 0.3 + idx * 0.08 },
+                                  scale: { duration: 0.5, delay: 0.3 + idx * 0.08 },
+                                  y: {
+                                    duration: node.duration,
+                                    repeat: Infinity,
+                                    ease: 'easeInOut',
+                                    delay: idx * 0.4,
+                                  },
+                                }
+                          }
                         >
-                          <span
-                            className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center transition-colors ${
+                          <Link
+                            ref={(el) => {
+                              nodeRefs.current[idx] = el;
+                            }}
+                            to={node.href}
+                            data-cursor="Open"
+                            onClick={(e) => {
+                              // On touch screens, first tap selects/inspects the agent node to show active halo & info card
+                              const isTouch = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+                              if (isTouch && hoveredNode !== node.id) {
+                                e.preventDefault();
+                                setHoveredNode(node.id);
+                              }
+                            }}
+                            onKeyDown={(e) => handleNodeKeyDown(e, idx)}
+                            onMouseEnter={() => setHoveredNode(node.id)}
+                            onMouseLeave={() => setHoveredNode(null)}
+                            onFocus={() => setHoveredNode(node.id)}
+                            onBlur={() => setHoveredNode(null)}
+                            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-2xl bg-[#0A0A0A]/90 backdrop-blur-md border transition-all duration-200 shadow-lg cursor-pointer ${
                               isActive
-                                ? 'bg-[#F36B21] text-white'
-                                : 'bg-[#1769AA]/35 text-[#EAF4FB]'
+                                ? 'border-[#F36B21] scale-105 shadow-[0_12px_28px_-8px_rgba(243,107,33,0.45)]'
+                                : 'border-white/20 hover:border-[#5BB4F5]'
                             }`}
                           >
-                            <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-                          </span>
-                          <span className="text-[11px] sm:text-xs font-semibold text-white whitespace-nowrap">
-                            <span className="sm:hidden">{node.shortLabel}</span>
-                            <span className="hidden sm:inline">{node.label}</span>
-                          </span>
-                        </Link>
-                      </motion.div>
+                            <span
+                              className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center transition-colors ${
+                                isActive
+                                  ? 'bg-[#F36B21] text-white'
+                                  : 'bg-[#1769AA]/35 text-[#EAF4FB]'
+                              }`}
+                            >
+                              <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                            </span>
+                            <span className="text-[11px] sm:text-xs font-semibold text-white whitespace-nowrap">
+                              <span className="sm:hidden">{node.shortLabel}</span>
+                              <span className="hidden sm:inline">{node.label}</span>
+                            </span>
+                          </Link>
+                        </motion.div>
+                      </div>
                     );
                   })}
                 </motion.div>

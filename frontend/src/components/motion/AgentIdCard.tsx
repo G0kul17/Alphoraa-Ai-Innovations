@@ -30,22 +30,37 @@ export function AgentIdCard() {
     mouseY.set(0.5);
   };
 
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (reducedMotion || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set(Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)));
+    mouseY.set(Math.max(0, Math.min(1, (touch.clientY - rect.top) / rect.height)));
+  };
+
+  const handleTouchEnd = () => {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
+  };
+
   return (
     <div className="w-full max-w-[380px] mx-auto" style={{ perspective: 1000 }}>
       <motion.div
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         animate={
           reducedMotion
             ? undefined
             : {
-                y: [0, -6, 0],
+                y: [0, -8, 0],
               }
         }
         transition={
           reducedMotion
             ? undefined
-            : { duration: 6, repeat: Infinity, ease: 'easeInOut' }
+            : { duration: 5, repeat: Infinity, ease: 'easeInOut' }
         }
         style={reducedMotion ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}
         className="relative"
@@ -55,8 +70,8 @@ export function AgentIdCard() {
           onClick={() => setFlipped((prev) => !prev)}
           data-cursor="Open"
           aria-pressed={flipped}
-          aria-label="Interactive AI Agent ID Card. Click to flip between front pass and capabilities."
-          className="relative w-full text-left rounded-3xl cursor-pointer focus-visible:rounded-3xl block"
+          aria-label="Interactive AI Agent ID Card. Tap or click to flip between front pass and capabilities."
+          className="relative w-full text-left rounded-3xl cursor-pointer focus-visible:rounded-3xl block touch-manipulation"
           style={{ transformStyle: 'preserve-3d' }}
         >
           <motion.div

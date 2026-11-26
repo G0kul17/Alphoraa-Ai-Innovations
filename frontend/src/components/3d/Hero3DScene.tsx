@@ -111,11 +111,23 @@ export function Hero3DScene({ className = '' }: Hero3DSceneProps) {
     const particleSystem = new THREE.Points(particlesGeo, particlesMat);
     mainGroup.add(particleSystem);
 
-    // Mouse Interaction
+    // Mouse & Touch Interaction
     let targetX = 0;
     let targetY = 0;
     let mouseX = 0;
     let mouseY = 0;
+    let scrollProgress = 0;
+
+    const handleScroll = () => {
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const windowH = window.innerHeight;
+      // Normalized progress: 0 when entering viewport, up to 1 when exiting
+      const progress = Math.max(0, Math.min(1, (windowH - rect.top) / (windowH + rect.height)));
+      scrollProgress = progress;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
 
     const handleMouseMove = (e: MouseEvent) => {
       const rect = container.getBoundingClientRect();
@@ -126,7 +138,19 @@ export function Hero3DScene({ className = '' }: Hero3DSceneProps) {
       targetY = y * 1.5;
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      const touch = e.touches[0];
+      const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const x = (touch.clientX - rect.left) / rect.width - 0.5;
+      const y = (touch.clientY - rect.top) / rect.height - 0.5;
+      targetX = x * 1.5;
+      targetY = y * 1.5;
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
 
     // Resize Observer to accurately stay synced with container
     const updateSize = () => {
@@ -155,6 +179,10 @@ export function Hero3DScene({ className = '' }: Hero3DSceneProps) {
       mouseX += (targetX - mouseX) * 0.05;
       mouseY += (targetY - mouseY) * 0.05;
 
+      // Scroll-driven camera zooming: smoothly zoom from 6.8 down to 5.1
+      const targetZ = 6.8 - scrollProgress * 1.7;
+      camera.position.z += (targetZ - camera.position.z) * 0.08;
+
       mainGroup.rotation.y = elapsed * 0.2 + mouseX * 0.8;
       mainGroup.rotation.x = mouseY * 0.6;
 
@@ -177,6 +205,8 @@ export function Hero3DScene({ className = '' }: Hero3DSceneProps) {
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('scroll', handleScroll);
       resizeObserver.disconnect();
       cancelAnimationFrame(animId);
       if (renderer.domElement.parentElement) {
