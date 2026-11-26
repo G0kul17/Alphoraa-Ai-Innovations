@@ -156,6 +156,34 @@ export function HeroSection() {
   const activeNodeObj = AGENT_NODES.find((n) => n.id === hoveredNode);
   const showScrollCue = scrollY < 80;
 
+  // Pause SVG data pulses while the hero is off-screen.
+  const ecosystemSvgRef = useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    const svg = ecosystemSvgRef.current;
+    if (!svg || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) svg.unpauseAnimations?.();
+      else svg.pauseAnimations?.();
+    });
+    observer.observe(svg);
+    return () => observer.disconnect();
+  }, []);
+
+  // Roving keyboard focus between agent nodes (arrow keys, Home, End).
+  const nodeRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const handleNodeKeyDown = (e: React.KeyboardEvent, idx: number) => {
+    const last = AGENT_NODES.length - 1;
+    let next = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = idx === last ? 0 : idx + 1;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = idx === 0 ? last : idx - 1;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = last;
+    if (next >= 0) {
+      e.preventDefault();
+      nodeRefs.current[next]?.focus();
+    }
+  };
+
   return (
     <section
       id="hero"
@@ -289,6 +317,7 @@ export function HeroSection() {
 
                 {/* 2. SVG connection lines overlay radiating from center (250, 230) */}
                 <motion.svg
+                  ref={ecosystemSvgRef}
                   viewBox="0 0 500 460"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -390,8 +419,12 @@ export function HeroSection() {
                         className="absolute pointer-events-auto"
                       >
                         <Link
+                          ref={(el) => {
+                            nodeRefs.current[idx] = el;
+                          }}
                           to={node.href}
                           data-cursor="Open"
+                          onKeyDown={(e) => handleNodeKeyDown(e, idx)}
                           onMouseEnter={() => setHoveredNode(node.id)}
                           onMouseLeave={() => setHoveredNode(null)}
                           onFocus={() => setHoveredNode(node.id)}
@@ -459,6 +492,21 @@ export function HeroSection() {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* Static fallback list for reduced motion: every agent readable without hover */}
+              {reducedMotion && (
+                <ul className="mt-2 w-full max-w-[500px] space-y-2 text-left" aria-label="AI agents">
+                  {AGENT_NODES.map((node) => (
+                    <li key={node.id} className="text-xs text-[#EAF4FB]/85 leading-relaxed">
+                      <Link to={node.href} className="font-semibold text-[#F36B21] hover:underline">
+                        {node.label}
+                      </Link>
+                      {': '}
+                      {node.description}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </Container>
