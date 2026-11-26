@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, useScroll } from 'motion/react';
 import { Search, Database, Zap, Headphones, BarChart3, ChevronDown } from 'lucide-react';
@@ -8,7 +8,10 @@ import { WordReveal } from '../animations/WordReveal';
 import { EASE_SMOOTH } from '../../animations/variants';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useScrollPosition } from '../../hooks/useScrollPosition';
-import { Hero3DScene } from '../3d/Hero3DScene';
+// Lazy-load the WebGL core so Three.js stays out of the first paint.
+const Hero3DScene = lazy(() =>
+  import('../3d/Hero3DScene').then((m) => ({ default: m.Hero3DScene }))
+);
 
 interface AgentNode {
   id: string;
@@ -312,7 +315,9 @@ export function HeroSection() {
               >
                 {/* 1. 3D WebGL Three.js Scene - Positioned in the exact center behind the nodes */}
                 <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
-                  <Hero3DScene className="w-full h-full" />
+                  <Suspense fallback={null}>
+                    <Hero3DScene className="w-full h-full" />
+                  </Suspense>
                 </div>
 
                 {/* 2. SVG connection lines overlay radiating from center (250, 230) */}
