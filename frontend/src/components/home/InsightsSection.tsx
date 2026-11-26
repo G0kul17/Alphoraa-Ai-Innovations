@@ -40,10 +40,12 @@ export function InsightsSection() {
                 transition={{ duration: 0.75, ease: EASE_SMOOTH }}
                 className="w-full h-full"
               >
-                <CoverArtwork
-                  variant={post.coverVariant}
-                  label={`${post.title} illustration`}
-                />
+                <div className="w-full h-full transition-transform duration-500 ease-out group-hover:scale-105 motion-reduce:transform-none">
+                  <CoverArtwork
+                    variant={post.coverVariant}
+                    label={`${post.title} illustration`}
+                  />
+                </div>
               </motion.div>
             </Link>
 

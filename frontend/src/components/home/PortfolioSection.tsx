@@ -100,10 +100,12 @@ export function PortfolioSection() {
                     transition={{ duration: 0.75, ease: EASE_SMOOTH }}
                     className="w-full h-full"
                   >
-                    <CoverArtwork
-                      variant={project.coverVariant}
-                      label={`${project.title} abstract illustration`}
-                    />
+                    <div className="w-full h-full transition-transform duration-500 ease-out group-hover:scale-105 motion-reduce:transform-none">
+                      <CoverArtwork
+                        variant={project.coverVariant}
+                        label={`${project.title} abstract illustration`}
+                      />
+                    </div>
                   </motion.div>
                 </Link>
 

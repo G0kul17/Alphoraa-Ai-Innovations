@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { Linkedin, Twitter, Github, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import { Logo } from '../common/Logo';
 import { Container } from '../common/Container';
 import { DemoTag } from '../common/DemoTag';
+import { Stagger } from '../animations/Stagger';
+import { fadeUp } from '../../animations/variants';
 import { SITE_CONFIG } from '../../data/config';
 import { FOOTER_QUICK_LINKS, LEGAL_LINKS } from '../../data/navigation';
 import { SERVICES } from '../../data/services';
@@ -20,9 +23,9 @@ export function Footer() {
   return (
     <footer className="keep-dark bg-[#000000] text-white border-t border-white/10">
       <Container className="py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
+        <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
           {/* Column 1: Brand */}
-          <div className="lg:col-span-4 space-y-5">
+          <motion.div variants={fadeUp} className="lg:col-span-4 space-y-5">
             <Logo variant="light" />
             <p className="text-sm text-[#EAF4FB]/80 leading-relaxed max-w-sm">
               Engineering intelligent AI systems, autonomous agents, and resilient software automation for modern organizations.
@@ -49,10 +52,10 @@ export function Footer() {
                 })}
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Column 2: Quick Links */}
-          <div className="lg:col-span-2">
+          <motion.div variants={fadeUp} className="lg:col-span-2">
             <h3 className="font-display text-sm font-semibold text-white mb-4">
               Quick Links
             </h3>
@@ -61,17 +64,17 @@ export function Footer() {
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-sm text-[#EAF4FB]/80 hover:text-white transition-colors"
+                    className="inline-block text-sm text-[#EAF4FB]/80 hover:text-white hover:translate-x-1 transition-all duration-200 motion-reduce:transform-none"
                   >
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Column 3: Services */}
-          <div className="lg:col-span-3">
+          <motion.div variants={fadeUp} className="lg:col-span-3">
             <h3 className="font-display text-sm font-semibold text-white mb-4">
               Services
             </h3>
@@ -80,17 +83,17 @@ export function Footer() {
                 <li key={service.id}>
                   <Link
                     to={`/services/${service.slug}`}
-                    className="text-sm text-[#EAF4FB]/80 hover:text-white transition-colors"
+                    className="inline-block text-sm text-[#EAF4FB]/80 hover:text-white hover:translate-x-1 transition-all duration-200 motion-reduce:transform-none"
                   >
                     {service.title}
                   </Link>
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Column 4: Contact Info */}
-          <div className="lg:col-span-3 space-y-4">
+          <motion.div variants={fadeUp} className="lg:col-span-3 space-y-4">
             <div className="flex items-center justify-between gap-2">
               <h3 className="font-display text-sm font-semibold text-white">
                 Contact Information
@@ -116,8 +119,8 @@ export function Footer() {
                 <span>{SITE_CONFIG.contactPlaceholders.address}</span>
               </li>
             </ul>
-          </div>
-        </div>
+          </motion.div>
+        </Stagger>
 
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#EAF4FB]/70">
