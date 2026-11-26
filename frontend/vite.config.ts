@@ -4,10 +4,11 @@ import fs from 'fs';
 import path from 'path';
 import {defineConfig} from 'vite';
 
-export default defineConfig(({command}) => {
+export default defineConfig(({command, isPreview}) => {
   return {
     // GitHub Pages serves the site from /Alphoraa-Ai-Innovations/. Dev keeps "/".
-    base: command === 'build' ? '/Alphoraa-Ai-Innovations/' : '/',
+    // `vite preview` reports command "serve", so it is detected via isPreview.
+    base: command === 'build' || isPreview ? '/Alphoraa-Ai-Innovations/' : '/',
     plugins: [
       react(),
       tailwindcss(),
