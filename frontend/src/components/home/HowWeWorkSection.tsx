@@ -1,9 +1,14 @@
-import { useRef, useState } from 'react';
-import { AnimatePresence, motion, useScroll, useTransform } from 'motion/react';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion, useMotionValue, useScroll, useTransform } from 'motion/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Compass, Map, PenTool, Code2, Rocket } from 'lucide-react';
 import { Section } from '../common/Section';
 import { EASE_SMOOTH } from '../../animations/variants';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useSmoothScroll } from '../../context/SmoothScrollContext';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const PROCESS_STEPS = [
   {
@@ -51,13 +56,61 @@ const PROCESS_STEPS = [
 export function HowWeWorkSection() {
   const [activeStep, setActiveStep] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<ScrollTrigger | null>(null);
   const reducedMotion = useReducedMotion();
+  const { scrollTo } = useSmoothScroll();
 
+  // Mobile list progress line (normal scroll)
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start 75%', 'end 60%'],
   });
-  const lineScale = useTransform(scrollYProgress, [0, 1], [0.15, 1]);
+  // Desktop timeline progress, driven by the pinned ScrollTrigger
+  const pinProgress = useMotionValue(0);
+  const lineScale = useTransform(pinProgress, [0, 1], [0.1, 1]);
+
+  // Pinned scene (desktop, motion allowed): scroll steps through the five stages.
+  useLayoutEffect(() => {
+    const pin = pinRef.current;
+    if (!pin) return;
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
+      const st = ScrollTrigger.create({
+        trigger: pin,
+        pin: true,
+        start: 'top top+=88',
+        end: () => `+=${Math.round(window.innerHeight * 1.6)}`,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          pinProgress.set(self.progress);
+          const idx = Math.min(
+            PROCESS_STEPS.length - 1,
+            Math.floor(self.progress * PROCESS_STEPS.length)
+          );
+          setActiveStep((prev) => (prev === idx ? prev : idx));
+        },
+      });
+      triggerRef.current = st;
+      return () => {
+        st.kill();
+        triggerRef.current = null;
+      };
+    });
+    return () => mm.revert();
+  }, [pinProgress]);
+
+  const goToStep = (idx: number) => {
+    const st = triggerRef.current;
+    if (st) {
+      // Jump the page scroll to the middle of that step's slice of the pinned range.
+      const target = st.start + ((idx + 0.5) / PROCESS_STEPS.length) * (st.end - st.start);
+      scrollTo(target, { offset: 0 });
+    } else {
+      setActiveStep(idx);
+    }
+  };
 
   const current = PROCESS_STEPS[activeStep];
   const CurrentIcon = current.icon;
@@ -72,8 +125,11 @@ export function HowWeWorkSection() {
       className="bg-[#0A0A0A]"
     >
       <div ref={containerRef}>
-        {/* Desktop Horizontal Timeline with Outlined Digits */}
-        <div className="hidden lg:block">
+        {/* Desktop Horizontal Timeline with Outlined Digits (pinned) */}
+        <div
+          ref={pinRef}
+          className="hidden lg:flex lg:flex-col lg:justify-center motion-reduce:hidden lg:min-h-[calc(100vh-88px)]"
+        >
           <div className="relative mb-10 pt-4">
             <div className="absolute top-[52px] left-[8%] right-[8%] h-0.5 bg-white/10" aria-hidden="true" />
             <motion.div
@@ -95,7 +151,7 @@ export function HowWeWorkSection() {
                   <button
                     key={step.id}
                     type="button"
-                    onClick={() => setActiveStep(idx)}
+                    onClick={() => goToStep(idx)}
                     className="group flex flex-col items-center text-center cursor-pointer focus-visible:rounded-xl p-2"
                   >
                     <div
@@ -179,7 +235,7 @@ export function HowWeWorkSection() {
         </div>
 
         {/* Mobile Vertical Timeline */}
-        <div className="lg:hidden relative pl-8 space-y-6">
+        <div className="lg:hidden motion-reduce:block relative pl-8 space-y-6">
           <div className="absolute left-3.5 top-3 bottom-3 w-0.5 bg-white/10" aria-hidden="true" />
           <motion.div
             aria-hidden="true"
