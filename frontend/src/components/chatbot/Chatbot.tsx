@@ -6,6 +6,7 @@ import { useChatbot } from '../../context/ChatbotContext';
 import { useSmoothScroll } from '../../context/SmoothScrollContext';
 import { EASE_SETTLE } from '../../animations/variants';
 import { AgentIcon } from '../common/AgentIcon';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface ChatAction {
   label: string;
@@ -23,11 +24,11 @@ interface ChatMessage {
 const WELCOME_TEXT =
   "Hello! Welcome to ALPHORAA AI INNOVATIONS.\n\nI'm your AI assistant. I can help you explore our services, discover our solutions, learn about our products or connect with our team.\n\nHow can I assist you today?";
 
-const QUICK_ACTIONS = [
-  'Explore AI Services',
-  'Discover Our Products',
-  'Request a Project Quote',
-  'Talk to Our Team',
+const QUICK_ACTIONS: ChatAction[] = [
+  { label: 'Explore AI Services', to: '/services' },
+  { label: 'Discover Our Products', to: '/products' },
+  { label: 'Request a Project Quote', to: '/contact' },
+  { label: 'Talk to Our Team', to: '/contact' },
 ];
 
 function getTimestamp(): string {
@@ -95,6 +96,7 @@ export function Chatbot() {
   const { isOpen, closeChat, pendingPrompt, clearPendingPrompt } = useChatbot();
   const { setLocked } = useSmoothScroll();
   const navigate = useNavigate();
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     setLocked(isOpen);
@@ -256,8 +258,11 @@ export function Chatbot() {
             aria-live="polite"
           >
             {messages.map((msg) => (
-              <div
+              <motion.div
                 key={msg.id}
+                initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, ease: EASE_SETTLE }}
                 className={`flex flex-col ${
                   msg.sender === 'user' ? 'items-end' : 'items-start'
                 }`}
@@ -289,15 +294,15 @@ export function Chatbot() {
                 <span className="mt-1 text-[10px] text-[#9CA3AF] px-1">
                   {msg.timestamp}
                 </span>
-              </div>
+              </motion.div>
             ))}
 
             {isTyping && (
               <div className="flex items-start">
                 <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1769AA] animate-bounce [animation-delay:-0.2s]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1769AA] animate-bounce [animation-delay:-0.1s]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1769AA] animate-bounce" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1769AA] animate-bounce motion-reduce:animate-pulse [animation-delay:-0.2s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1769AA] animate-bounce motion-reduce:animate-pulse [animation-delay:-0.1s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1769AA] animate-bounce motion-reduce:animate-pulse" />
                 </div>
               </div>
             )}
@@ -308,12 +313,12 @@ export function Chatbot() {
           <div className="px-4 py-2.5 bg-[#0A0A0A] border-t border-white/5 flex flex-wrap gap-1.5">
             {QUICK_ACTIONS.map((action) => (
               <button
-                key={action}
+                key={action.label}
                 type="button"
-                onClick={() => sendUserMessage(action)}
+                onClick={() => handleActionNavigate(action.to)}
                 className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#141414]/80 text-[#EAF4FB] hover:bg-[#1769AA] hover:text-white transition-colors cursor-pointer"
               >
-                {action}
+                {action.label}
               </button>
             ))}
           </div>
