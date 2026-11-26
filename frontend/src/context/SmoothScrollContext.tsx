@@ -64,7 +64,21 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
     } else {
       lenis.start();
     }
-  }, [locked]);
+  }, [locked, reducedMotion]);
+
+  // Refresh ScrollTrigger once fonts and images have settled (layout shifts move triggers).
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = () => {
+      if (!cancelled) ScrollTrigger.refresh();
+    };
+    document.fonts?.ready.then(refresh).catch(() => {});
+    window.addEventListener('load', refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('load', refresh);
+    };
+  }, []);
 
   // Reset scroll to top on route change and refresh ScrollTrigger
   useEffect(() => {

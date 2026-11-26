@@ -1,43 +1,72 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { EASE, INTRO_SESSION_KEY } from '../../animations/tokens';
 
 const SHUTTER_COLUMNS = 5;
 
+/** True when the intro already played in this browser session. */
+function introAlreadySeen(): boolean {
+  try {
+    return sessionStorage.getItem(INTRO_SESSION_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markIntroSeen() {
+  try {
+    sessionStorage.setItem(INTRO_SESSION_KEY, '1');
+  } catch {
+    /* storage unavailable: intro may replay on reload, which is acceptable */
+  }
+}
+
 export function Preloader() {
   const reducedMotion = useReducedMotion();
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(() => !introAlreadySeen());
   const [animStage, setAnimStage] = useState<'drawing' | 'ignite' | 'revealed'>('drawing');
+  const timers = useRef<number[]>([]);
 
   useEffect(() => {
-    if (reducedMotion) {
+    if (reducedMotion || !visible) {
       setVisible(false);
       return;
     }
 
-    // Stage 1: Laser stroke draws the logo (0ms -> 600ms)
-    // Stage 2: Neon light bloom ignite (600ms -> 1100ms)
-    // Stage 3: Staggered shutter column cascade wipe (1100ms)
-    const t1 = setTimeout(() => {
-      setAnimStage('ignite');
-    }, 600);
+    markIntroSeen();
 
-    const t2 = setTimeout(() => {
+    const clearAll = () => {
+      timers.current.forEach(window.clearTimeout);
+      timers.current = [];
+    };
+
+    // Total length <= 1.5s: draw (0-450ms), ignite (450-800ms), shutter wipe (800-1500ms).
+    timers.current.push(window.setTimeout(() => setAnimStage('ignite'), 450));
+    timers.current.push(window.setTimeout(() => setAnimStage('revealed'), 800));
+    timers.current.push(window.setTimeout(() => setVisible(false), 1500));
+
+    // Skip with any click or key press.
+    const skip = () => {
+      clearAll();
       setAnimStage('revealed');
-    }, 1250);
-
-    const t3 = setTimeout(() => {
-      setVisible(false);
-    }, 1850);
+      timers.current.push(window.setTimeout(() => setVisible(false), 650));
+      window.removeEventListener('pointerdown', skip);
+      window.removeEventListener('keydown', skip);
+    };
+    window.addEventListener('pointerdown', skip);
+    window.addEventListener('keydown', skip);
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      clearAll();
+      window.removeEventListener('pointerdown', skip);
+      window.removeEventListener('keydown', skip);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reducedMotion]);
 
   if (reducedMotion) return null;
+
 
   return (
     <AnimatePresence>
@@ -58,9 +87,9 @@ export function Preloader() {
                     ? {
                         y: '-100%',
                         transition: {
-                          duration: 0.75,
-                          delay: i * 0.07, // Staggered cascade wave
-                          ease: [0.85, 0, 0.15, 1], // Luxury cubic ease
+                          duration: 0.5,
+                          delay: i * 0.05, // Staggered cascade wave
+                          ease: EASE.inOut, // Luxury cubic ease
                         },
                       }
                     : { y: 0 }
@@ -151,14 +180,14 @@ export function Preloader() {
 
             {/* Masked Typographic Brand Reveal */}
             <div className="overflow-hidden mt-5 text-center">
-              <motion.h1
+              <motion.div
                 initial={{ y: 35, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.4, delay: 0.25, ease: EASE.settle }}
                 className="font-brand text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-1"
               >
                 <span>ALPHORAA</span>
-              </motion.h1>
+              </motion.div>
             </div>
 
             <div className="overflow-hidden mt-1 text-center">

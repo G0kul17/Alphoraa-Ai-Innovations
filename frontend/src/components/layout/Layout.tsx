@@ -14,6 +14,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <CustomCursor />
       <a
         href="#main-content"
+        onClick={(e) => {
+          // HashRouter owns location.hash, so a plain #anchor would change the route.
+          e.preventDefault();
+          const main = document.getElementById('main-content');
+          main?.setAttribute('tabindex', '-1');
+          main?.focus({ preventScroll: true });
+          main?.scrollIntoView({ block: 'start' });
+        }}
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#1769AA] focus:text-white focus:rounded-lg"
       >
         Skip to main content

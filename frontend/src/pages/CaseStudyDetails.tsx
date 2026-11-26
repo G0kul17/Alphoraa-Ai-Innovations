@@ -6,6 +6,7 @@ import { Container } from '../components/common/Container';
 import { CoverArtwork } from '../components/common/CoverArtwork';
 import { getProjectBySlug, PROJECTS } from '../data/projects';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
+import { useSmoothScroll } from '../context/SmoothScrollContext';
 import NotFound from './NotFound';
 
 const SECTIONS = [
@@ -22,6 +23,7 @@ export default function CaseStudyDetails() {
   const { slug } = useParams<{ slug: string }>();
   const project = slug ? getProjectBySlug(slug) : undefined;
   const [scrollProgress, setScrollProgress] = useState(0);
+  const { scrollTo } = useSmoothScroll();
 
   useDocumentMeta(
     project ? project.title : 'Case Study Not Found',
@@ -87,6 +89,11 @@ export default function CaseStudyDetails() {
                   <a
                     key={sec.id}
                     href={`#${sec.id}`}
+                    onClick={(e) => {
+                      // HashRouter owns location.hash, so scroll manually instead.
+                      e.preventDefault();
+                      scrollTo(`#${sec.id}`);
+                    }}
                     className="block px-2.5 py-2 rounded-lg text-xs font-medium text-white hover:bg-white/10 hover:text-[#5BB4F5] transition-colors"
                   >
                     {sec.label}

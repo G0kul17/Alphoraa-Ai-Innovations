@@ -4,7 +4,6 @@ import { AnimatePresence } from 'motion/react';
 import { ChatbotProvider } from './context/ChatbotContext';
 import { SmoothScrollProvider } from './context/SmoothScrollContext';
 import { Layout } from './components/layout/Layout';
-import { ScrollToTop } from './components/common/ScrollToTop';
 import { PageLoader } from './components/common/PageLoader';
 import { PageTransition } from './components/animations/PageTransition';
 
@@ -63,7 +62,6 @@ export default function App() {
     <HashRouter>
       <SmoothScrollProvider>
         <ChatbotProvider>
-          <ScrollToTop />
           <Layout>
             <AnimatedRoutes />
           </Layout>

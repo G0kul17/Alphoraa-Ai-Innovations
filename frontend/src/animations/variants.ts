@@ -1,7 +1,9 @@
 import type { Variants } from 'motion/react';
 
-export const EASE_SMOOTH: [number, number, number, number] = [0.22, 1, 0.36, 1];
-export const EASE_SETTLE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+import { DISTANCE, DURATION, EASE } from './tokens';
+
+export const EASE_SMOOTH = EASE.entrance;
+export const EASE_SETTLE = EASE.settle;
 
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -67,15 +69,15 @@ export const wordRevealItem: Variants = {
 };
 
 export const pageTransition: Variants = {
-  initial: { opacity: 0, y: 12 },
+  initial: { opacity: 0, y: DISTANCE.sm },
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.35, ease: EASE_SMOOTH },
+    transition: { duration: DURATION.page, ease: EASE_SMOOTH },
   },
   exit: {
     opacity: 0,
-    y: -8,
-    transition: { duration: 0.2, ease: EASE_SMOOTH },
+    y: -DISTANCE.xs,
+    transition: { duration: DURATION.pageExit, ease: EASE_SMOOTH },
   },
 };
