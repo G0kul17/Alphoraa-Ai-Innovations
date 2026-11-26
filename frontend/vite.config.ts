@@ -4,8 +4,10 @@ import fs from 'fs';
 import path from 'path';
 import {defineConfig} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({command}) => {
   return {
+    // GitHub Pages serves the site from /Alphoraa-Ai-Innovations/. Dev keeps "/".
+    base: command === 'build' ? '/Alphoraa-Ai-Innovations/' : '/',
     plugins: [
       react(),
       tailwindcss(),

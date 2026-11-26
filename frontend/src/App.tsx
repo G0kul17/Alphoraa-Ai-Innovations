@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'motion/react';
 import { ChatbotProvider } from './context/ChatbotContext';
 import { SmoothScrollProvider } from './context/SmoothScrollContext';
@@ -58,7 +58,9 @@ function AnimatedRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    // HashRouter: GitHub Pages has no SPA fallback, so deep links and refresh
+    // would 404 with BrowserRouter. Hash URLs always resolve to index.html.
+    <HashRouter>
       <SmoothScrollProvider>
         <ChatbotProvider>
           <ScrollToTop />
@@ -67,6 +69,6 @@ export default function App() {
           </Layout>
         </ChatbotProvider>
       </SmoothScrollProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
