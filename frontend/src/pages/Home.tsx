@@ -13,6 +13,7 @@ import { TestimonialsAndFaqSection } from '../components/home/TestimonialsAndFaq
 import { FinalCtaSection } from '../components/home/FinalCtaSection';
 import { Story3DScrollytelling } from '../components/3d/Story3DScrollytelling';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
+import { ScrollProgress } from '../components/motion/ScrollProgress';
 
 export default function Home() {
   useDocumentMeta(
@@ -22,6 +23,7 @@ export default function Home() {
 
   return (
     <>
+      <ScrollProgress />
       <HeroSection />
       <TechnologyStrip />
       <AboutSection />
